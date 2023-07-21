@@ -28,10 +28,15 @@ def get_products(db: Session = Depends(get_db)):
 def get_product(product_id: int, db: Session = Depends(get_db)):
     """gets only one product. We query it by filtering the products table
     to retrieve only the product that has the id that we passed"""
-    product = db.query(models.Product).filter(
+    product_query = db.query(models.Product).filter(
         models.Product.id == product_id
-    ).first()
-    return product
+    )
+    if product_query.first() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with id: {product_id} doesn't exist"
+        )
+    return product_query.first()
 
 
 @app.post(
@@ -68,10 +73,10 @@ def update_product(
     product_query = db.query(models.Product).filter(
         models.Product.id == product_id
     )
-    if product_query.first() == None:
+    if product_query.first() is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"no product with id {product_id} was found"
+            detail=f"Product with id: {product_id} doesn't exist"
         )
     product_query.update(product.model_dump())
     db.commit()
@@ -89,10 +94,10 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     product_query = db.query(models.Product).filter(
         models.Product.id == product_id
     )
-    if product_query.first() == None:
+    if product_query.first() is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"no product with id {product_id} was found"
+            detail=f"Product with id: {product_id} doesn't exist"
         )
     product_query.delete()
     db.commit()
